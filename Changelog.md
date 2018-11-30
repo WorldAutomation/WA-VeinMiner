@@ -1,42 +1,11 @@
 Changelog
 =========
 
-0.38.2
--------
-Fixes:
-* A tinkers tools actually stops when broken.
-* Improved mcmod.info
-
-
-0.38.1
--------
-Fixes:
-* Catch a potential NPE when veinmining.
-* Allow access to config GUI when not in any game.
-
-
-0.38.0
--------
-Changes:
-* Stopped access to server-based settings from "Mod Options" GUI when in multi-player (it was just lying to you)
-* Added support for more tools.
-
-Fixes:
-* Hopefully improve syncing of settings when using the "Mod Options" GUI.
-* Fixed some crash bugs.
-
-
 0.36.0
 -------
 Fixes:
 * Less crashes (hopefully)
 * Less problems joining servers
-
-
-0.35.3
-------
-Fixes:
-* Introduce item AWOL fix and slap the person that didn't implement the fix.
 
 
 0.35.2
@@ -67,7 +36,6 @@ Changes:
 ------
 Fixes:
 * Fix modes again.
-* (Hopefully) Fix Tinkers support.
 
 0.34.0
 ------
@@ -78,11 +46,6 @@ Fixes:
 ------
 Fixes:
 * Fix possible issues with tinkers construct tools.
-
-0.33.1
-------
-Changes:
-* Allow loading in 1.10.
 
 0.33.0
 ------
@@ -105,14 +68,6 @@ Changes:
 Fixes:
 * Tool auto-detect actually works.
 
-0.31.5
--------
-Ported to 1.9
-Fixes:
-* Bug with chat on multiplayer (separate client and server).
-Known problems:
-* Keybind does not work. This is a forge bug.
-
 0.31.6
 ------
 Changes:
@@ -128,12 +83,6 @@ Fixes:
 Fixes:
 * Further attempts to fix ConcurrentModificationException crashes.
 
-0.31.2
--------
-Fixes:
-* Fix autocomplete
-* Make detection of the same blocks better.
-
 0.31.1
 ------
 Fixes:
@@ -141,12 +90,9 @@ Fixes:
 
 0.31.0
 ------
-Changes:
-* Updated to 1.8.9.
 Fixes:
 * Torches and grass on top of blocks destroyed by veinminer now drop properly.
 * Veinminer should be faster, working closer to the advertised speed.
-* Crash on tools screen.
 
 0.30.2
 ------
@@ -154,12 +100,22 @@ Fixes:
 * The command to reload configs from file is 'reloadconfig' not 'loadconfig'
 * The per tick command returns the correct value.
 
+0.30.1
+------
+Bob Ross edition.
+Changes/Fixes:
+* You can now have happy little accidents with happy little white trees. Instead of a 2 inch brush, use a crook.
+
 0.30.0
 -------
 Changes:
 * Add a '/veinminer reloadconfig' command. This reloads the configs from the config file (yes, it does what it says on the tin).
 * New config option 'expmodifier' to customise the amount of experience is used (and is required) for each block VeinMiner mines.
 * New config option 'hungermodifier' to customise how much extra hunger each block takes to mine.
+
+0.29.1
+------
+Changes:
 * Change the way that veinminer works. You should not see a difference in the way it works.
 Fixes:
 * Fix crash when veinmining using a AOE tool (tinkers hammer).
@@ -219,18 +175,19 @@ Known issues: Can't connect to servers.
 ------
 Changes:
 * Now have Veinminer API as api annotation.
-* Veinminer can now be configured from the server console.
 Fixes:
-* Fix connecting to a server with Veinminer without having it on the client.
 * Fail at fixing connecting to a server with Veinminer without having it on the client.
 Known issues: Can't connect to servers.
+
+0.23.0
+------
+Fixes:
 * Fix checking of the blocklimit when mining.
-* Make keybind more reliable.
 
 0.22.0
 ------
 Changes:
-* Update to Minecraft 1.8
+* Veinminer can now be configured from the server console.
 
 0.21.2
 ------

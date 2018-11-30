@@ -17,7 +17,7 @@
 
 package portablejim.veinminer.api;
 
-import net.minecraftforge.fml.common.eventhandler.Event;
+import cpw.mods.fml.common.eventhandler.Event;
 import net.minecraft.entity.player.EntityPlayerMP;
 
 /**

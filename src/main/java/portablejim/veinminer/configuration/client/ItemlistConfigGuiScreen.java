@@ -17,8 +17,8 @@
 
 package portablejim.veinminer.configuration.client;
 
-import net.minecraftforge.fml.client.FMLClientHandler;
-import net.minecraftforge.fml.common.registry.GameRegistry;
+import cpw.mods.fml.client.FMLClientHandler;
+import cpw.mods.fml.common.registry.GameRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
@@ -33,7 +33,6 @@ import portablejim.veinminer.configuration.client.elements.GuiElementSlotItemlis
 import portablejim.veinminer.lib.IconRenderer;
 import portablejim.veinminer.util.BlockID;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -79,9 +78,9 @@ public class ItemlistConfigGuiScreen extends GuiScreen {
         clearButton.enabled = false;
         this.buttonList.add(clearButton);
 
-        iconRenderer = new IconRenderer(mc, zLevel);
+        iconRenderer = new IconRenderer(mc, zLevel, fontRendererObj, mc.getTextureManager());
 
-        textFieldAdd = new GuiTextField(5, this.getFontRenderer(), this.width / 2 - 128, 34, 176, 20);
+        textFieldAdd = new GuiTextField(this.getFontRenderer(), this.width / 2 - 128, 34, 176, 20);
         textFieldAdd.setMaxStringLength(128);
         textFieldAdd.setEnabled(true);
         textFieldAdd.setFocused(true);
@@ -177,11 +176,7 @@ public class ItemlistConfigGuiScreen extends GuiScreen {
 
     @Override
     protected void mouseClicked(int par1, int par2, int par3) {
-        try {
-            super.mouseClicked(par1, par2, par3);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        super.mouseClicked(par1, par2, par3);
         this.textFieldAdd.mouseClicked(par1, par2, par3);
     }
 
@@ -196,16 +191,9 @@ public class ItemlistConfigGuiScreen extends GuiScreen {
         if(renderIcon) {
             BlockID testBlockId = new BlockID(textFieldText);
 
-            Item testItem = Item.getByNameOrId(testBlockId.name);
-            Block testBlock = Block.getBlockFromName(testBlockId.name);
-            ItemStack itemStack = null;
-            if(testItem != null) {
-                itemStack = new ItemStack(testItem);
-            }
-            else if(testBlock != null){
-                itemStack = new ItemStack(testBlock);
-            }
-            if(itemStack != null) {
+            String[] testItemName = testBlockId.name.split(":", 2);
+            if(testItemName.length == 2) {
+                ItemStack itemStack = GameRegistry.findItemStack(testItemName[0], testItemName[1], 1);
                 itemStack.setItemDamage(testBlockId.metadata == -1 ? 0 : testBlockId.metadata);
                 iconRenderer.renderItemStackIcon(this.width / 2 - 152, 34, itemStack);
             }

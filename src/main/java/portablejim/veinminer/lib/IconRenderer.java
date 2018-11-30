@@ -18,12 +18,12 @@
 package portablejim.veinminer.lib;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.VertexBuffer;
-import net.minecraft.client.renderer.RenderItem;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.renderer.entity.RenderItem;
+import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.item.ItemStack;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
@@ -36,13 +36,17 @@ import org.lwjgl.opengl.GL12;
 public class IconRenderer {
     private final Minecraft minecraft;
     private final double zLevel;
+    private final FontRenderer fontRenderer;
+    private final TextureManager textureManager;
     private RenderItem itemRenderer;
 
-    public IconRenderer(Minecraft minecraft, double zLevel) {
+    public IconRenderer(Minecraft minecraft, double zLevel, FontRenderer fontRenderer, TextureManager textureManager) {
 
         this.minecraft = minecraft;
         this.zLevel = zLevel;
-        this.itemRenderer = minecraft.getRenderItem();
+        this.fontRenderer = fontRenderer;
+        this.textureManager = textureManager;
+        this.itemRenderer = new RenderItem();
     }
 
     public void renderItemStackIcon(int renderX, int renderY, ItemStack itemStack)
@@ -52,8 +56,7 @@ public class IconRenderer {
         if (itemStack != null)
         {
             RenderHelper.enableGUIStandardItemLighting();
-            //this.itemRenderer.renderItemIntoGUI(this.fontRenderer, textureManager, itemStack, renderX + 2, renderY + 2);
-            this.itemRenderer.renderItemIntoGUI(itemStack, renderX + 2, renderY + 2);
+            this.itemRenderer.renderItemIntoGUI(this.fontRenderer, textureManager, itemStack, renderX + 2, renderY + 2);
             RenderHelper.disableStandardItemLighting();
         }
         GL11.glDisable(GL12.GL_RESCALE_NORMAL);
@@ -63,13 +66,12 @@ public class IconRenderer {
     {
         GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
         minecraft.getTextureManager().bindTexture(Gui.statIcons);
-        Tessellator tessellator = Tessellator.getInstance();
-        VertexBuffer wr = tessellator.getBuffer();
-        wr.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        wr.pos((double) (xBase), (double) (yBase + 18), zLevel).tex((double) ((float) (uBase) * 0.0078125F), (double) ((float) (vBase + 18) * 0.0078125F)).endVertex();
-        wr.pos((double) (xBase + 18), (double) (yBase + 18), zLevel).tex((double) ((float) (uBase + 18) * 0.0078125F), (double) ((float) (vBase + 18) * 0.0078125F)).endVertex();
-        wr.pos((double) (xBase + 18), (double) (yBase), zLevel).tex((double) ((float) (uBase + 18) * 0.0078125F), (double) ((float) (vBase) * 0.0078125F)).endVertex();
-        wr.pos((double) (xBase), (double) (yBase), zLevel).tex((double) ((float) (uBase) * 0.0078125F), (double) ((float) (vBase) * 0.0078125F)).endVertex();
-        wr.finishDrawing();
+        Tessellator tessellator = Tessellator.instance;
+        tessellator.startDrawingQuads();
+        tessellator.addVertexWithUV((double)(xBase), (double)(yBase + 18), zLevel, (double)((float)(uBase) * 0.0078125F), (double)((float)(vBase + 18) * 0.0078125F));
+        tessellator.addVertexWithUV((double) (xBase + 18), (double) (yBase + 18), zLevel, (double) ((float) (uBase + 18) * 0.0078125F), (double) ((float) (vBase + 18) * 0.0078125F));
+        tessellator.addVertexWithUV((double)(xBase + 18), (double)(yBase), zLevel, (double)((float)(uBase + 18) * 0.0078125F), (double)((float)(vBase) * 0.0078125F));
+        tessellator.addVertexWithUV((double)(xBase), (double)(yBase), zLevel, (double)((float)(uBase) * 0.0078125F), (double)((float)(vBase) * 0.0078125F));
+        tessellator.draw();
     }
 }

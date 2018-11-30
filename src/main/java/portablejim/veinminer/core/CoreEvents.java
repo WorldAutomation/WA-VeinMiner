@@ -1,11 +1,13 @@
 package portablejim.veinminer.core;
 
+import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.common.eventhandler.EventPriority;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.relauncher.Side;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.BlockEvent;
-import net.minecraftforge.fml.common.eventhandler.EventPriority;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import portablejim.veinminer.VeinMiner;
 import portablejim.veinminer.api.VeinminerInitalToolCheck;
 import portablejim.veinminer.configuration.ConfigurationSettings;
@@ -20,7 +22,7 @@ import portablejim.veinminer.api.Point;
 public class CoreEvents {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public void blockBreakEvent(BlockEvent.BreakEvent event) {
-        if(event.getWorld().isRemote) {
+        if(event.world.isRemote) {
             // I am officially lost.
             // I am a server method but I find myself on the client.
             return;
@@ -46,8 +48,7 @@ public class CoreEvents {
         if(startConfig.allowVeinminerStart.isAllowed()) {
             radiusLimit = Math.min(startConfig.radiusLimit, radiusLimit);
             blockLimit = Math.min(startConfig.blockLimit, blockLimit);
-            //MinerInstance instance = new MinerInstance(event.world, (EntityPlayerMP) event.getPlayer(), Compatibility.getPoint(event), new BlockID(Block.blockRegistry.getNameForObject(event.block), event.blockMetadata), server, radiusLimit, blockLimit);
-            MinerInstance instance = new MinerInstance(event.getWorld(), (EntityPlayerMP) event.getPlayer(), Compatibility.getPoint(event), new BlockID(event.getState()), server, radiusLimit, blockLimit);
+            MinerInstance instance = new MinerInstance(event.world, (EntityPlayerMP) event.getPlayer(), Compatibility.getPoint(event), new BlockID(Block.blockRegistry.getNameForObject(event.block), event.blockMetadata), server, radiusLimit, blockLimit);
 
             if (instance.mineBlock(breakPont) > 0) {
                 event.setCanceled(true);

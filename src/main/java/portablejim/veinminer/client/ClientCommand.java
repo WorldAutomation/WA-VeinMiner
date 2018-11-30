@@ -1,14 +1,18 @@
 package portablejim.veinminer.client;
 
-import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityClientPlayerMP;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.command.CommandBase;
+import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.ChatComponentTranslation;
+import net.minecraft.util.StatCollector;
 import portablejim.veinminer.VeinMiner;
 import portablejim.veinminer.network.PacketChangeMode;
+import portablejim.veinminer.server.CommandSenderPlayer;
+import portablejim.veinminer.util.PlayerStatus;
 import portablejim.veinminer.util.PreferredMode;
 
 import java.util.List;
@@ -26,14 +30,7 @@ public class ClientCommand extends CommandBase {
     }
 
     @Override
-    public int getRequiredPermissionLevel()
-    {
-        return 0;
-    }
-
-    @Override
-    public boolean checkPermission(MinecraftServer server, ICommandSender sender)
-    {
+    public boolean canCommandSenderUseCommand(ICommandSender par1ICommandSender) {
         return true;
     }
 
@@ -43,9 +40,9 @@ public class ClientCommand extends CommandBase {
     }
 
     @Override
-    public void execute(MinecraftServer server, ICommandSender sender, String[] astring) throws WrongUsageException {
-        if(sender instanceof EntityPlayerSP) {
-            EntityPlayerSP senderPlayer = (EntityPlayerSP) sender;
+    public void processCommand(ICommandSender sender, String[] astring) {
+        if(sender instanceof EntityClientPlayerMP) {
+            EntityClientPlayerMP senderPlayer = (EntityClientPlayerMP) sender;
             UUID player = senderPlayer.getPersistentID();
             PacketChangeMode p = null;
 
@@ -55,27 +52,27 @@ public class ClientCommand extends CommandBase {
             else if(astring[0].equals(modes[0])) {
                 p = new PacketChangeMode(PreferredMode.DISABLED);
                 VeinMiner.instance.currentMode = PreferredMode.DISABLED;
-                senderPlayer.addChatMessage(new TextComponentTranslation("command.veinminerc.set.disabled"));
+                senderPlayer.addChatMessage(new ChatComponentTranslation("command.veinminerc.set.disabled"));
             }
             else if(astring[0].equals(modes[1])) {
                 p = new PacketChangeMode(PreferredMode.PRESSED);
                 VeinMiner.instance.currentMode = PreferredMode.PRESSED;
-                senderPlayer.addChatMessage(new TextComponentTranslation("command.veinminerc.set.pressed"));
+                senderPlayer.addChatMessage(new ChatComponentTranslation("command.veinminerc.set.pressed"));
             }
             else if(astring[0].equals(modes[2])) {
                 p = new PacketChangeMode(PreferredMode.RELEASED);
                 VeinMiner.instance.currentMode = PreferredMode.RELEASED;
-                senderPlayer.addChatMessage(new TextComponentTranslation("command.veinminerc.set.released"));
+                senderPlayer.addChatMessage(new ChatComponentTranslation("command.veinminerc.set.released"));
             }
             else if(astring[0].equals(modes[3])) {
                 p = new PacketChangeMode(PreferredMode.SNEAK_ACTIVE);
                 VeinMiner.instance.currentMode = PreferredMode.SNEAK_ACTIVE;
-                senderPlayer.addChatMessage(new TextComponentTranslation("command.veinminerc.set.disabled"));
+                senderPlayer.addChatMessage(new ChatComponentTranslation("command.veinminerc.set.disabled"));
             }
             else if(astring[0].equals(modes[4])) {
                 p = new PacketChangeMode(PreferredMode.SNEAK_INACTIVE);
                 VeinMiner.instance.currentMode = PreferredMode.SNEAK_INACTIVE;
-                senderPlayer.addChatMessage(new TextComponentTranslation("command.veinminerc.set.disabled"));
+                senderPlayer.addChatMessage(new ChatComponentTranslation("command.veinminerc.set.disabled"));
             }
             else {
                 throw new WrongUsageException("/veinminerc disabled/pressed/released/sneak/no_sneak");
@@ -88,12 +85,18 @@ public class ClientCommand extends CommandBase {
     }
 
     @Override
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender par1ICommandSender, String[] arguments, BlockPos pos) {
+    public List addTabCompletionOptions(ICommandSender par1ICommandSender, String[] arguments) {
         return getListOfStringsMatchingLastWord(arguments, modes);
     }
 
     public int compareTo(ClientCommand par1ICommand)
     {
         return this.getCommandName().compareTo(par1ICommand.getCommandName());
+    }
+
+    @Override
+    public int compareTo(Object par1Obj)
+    {
+        return this.compareTo((ICommand)par1Obj);
     }
 }

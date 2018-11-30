@@ -18,38 +18,43 @@
 package portablejim.veinminermodsupport;
 
 import bluedart.api.IBreakable;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.common.FMLLog;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.ModContainer;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import com.google.common.io.Files;
+import cpw.mods.fml.common.FMLLog;
+import cpw.mods.fml.common.Loader;
+import cpw.mods.fml.common.Mod;
+import cpw.mods.fml.common.ModContainer;
+import cpw.mods.fml.common.event.FMLInitializationEvent;
+import cpw.mods.fml.common.event.FMLPostInitializationEvent;
+import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.network.NetworkCheckHandler;
+import cpw.mods.fml.common.registry.GameRegistry;
+import cpw.mods.fml.relauncher.Side;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.network.NetworkCheckHandler;
-import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.common.config.Configuration;
+import portablejim.veinminer.VeinMiner;
 import portablejim.veinminer.api.IMCMessage;
 import portablejim.veinminer.api.Permission;
 import portablejim.veinminer.api.VeinminerHarvestFailedCheck;
 import portablejim.veinminer.api.VeinminerPostUseTool;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static net.minecraftforge.fml.common.Mod.EventHandler;
-import static net.minecraftforge.fml.common.Mod.Instance;
+import static cpw.mods.fml.common.Mod.EventHandler;
+import static cpw.mods.fml.common.Mod.Instance;
 
 /**
  * Main mod class to handle events from Veinminer and cancel events when
@@ -57,8 +62,7 @@ import static net.minecraftforge.fml.common.Mod.Instance;
  */
 
 @Mod(modid = ModInfo.MOD_ID,
-        name = ModInfo.MOD_NAME,
-        acceptedMinecraftVersions = "[1.9,1.11)")
+        name = ModInfo.MOD_NAME)
 public class VeinMinerModSupport {
 
     private boolean debugMode = false;
@@ -66,7 +70,9 @@ public class VeinMinerModSupport {
     @Instance(ModInfo.MOD_ID)
     public static VeinMinerModSupport instance;
 
-    private boolean forceConsumerAvailable;
+    public boolean forceConsumerAvailable;
+
+    private Boolean configLoaded = false;
 
     private final static String[] FALSETOOLS_DEFAULT = {
             "excompressum:chicken_stick",
@@ -77,14 +83,6 @@ public class VeinMinerModSupport {
             "excompressum:compressed_hammer_diamond",
             "excompressum:double_compressed_diamond_hammer",
             "excompressum:compressed_crook",
-            "redstonearsenal:tool.axe_flux",
-            "redstonearsenal:tool.battlewrench_flux",
-            "redstonearsenal:tool.hammer_flux",
-            "redstonearsenal:tool.pickaxe_flux",
-            "redstonearsenal:tool.shovel_flux",
-            "redstonearsenal:tool.sickle_flux",
-            "redstonearsenal:tool.sword_flux",
-            "actuallyadditions:item_drill",
     };
     private Set<String> falseTools = new LinkedHashSet<String>();
 
@@ -108,7 +106,6 @@ public class VeinMinerModSupport {
 
     }
 
-    @SuppressWarnings("unused")
     @NetworkCheckHandler
     public boolean checkClientModVersion(Map<String, String> mods, Side side) {
         return true;
@@ -137,13 +134,13 @@ public class VeinMinerModSupport {
 
             config.save();
 
+            configLoaded = true;
         }
         catch(Exception e) {
             event.getModLog().error("Error writing config file");
         }
     }
 
-    @SuppressWarnings("unused")
     @EventHandler
     public void init(@SuppressWarnings("UnusedParameters") FMLInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(this);
@@ -164,56 +161,115 @@ public class VeinMinerModSupport {
     }
 
     private void addTools() {
-        if(Loader.isModLoaded("tconstruct")) {
+        if(Loader.isModLoaded("IC2")) {
+            IMCMessage.addTool("axe", "IC2:itemToolBronzeAxe");
+            IMCMessage.addTool("axe", "IC2:itemToolChainsaw");
+            IMCMessage.addTool("hoe", "IC2:itemToolBronzeHoe");
+            IMCMessage.addTool("pickaxe", "IC2:itemToolBronzePickaxe");
+            IMCMessage.addTool("pickaxe", "IC2:itemToolDrill");
+            IMCMessage.addTool("pickaxe", "IC2:itemToolDDrill");
+            IMCMessage.addTool("pickaxe", "IC2:itemToolIridiumDrill");
+            IMCMessage.addTool("shears", "IC2:itemToolBronzeHoe");
+            IMCMessage.addTool("shovel", "IC2:itemToolBronzeSpade");
+        }
+        if(Loader.isModLoaded("appliedenergistics2")) {
+            IMCMessage.addTool("axe", "appliedenergistics2:item.ToolCertusQuartzAxe");
+            IMCMessage.addTool("hoe", "appliedenergistics2:item.ToolCertusQuartzHoe");
+            IMCMessage.addTool("pickaxe", "appliedenergistics2:item.ToolCertusQuartzPickaxe");
+            IMCMessage.addTool("shovel", "appliedenergistics2:item.ToolCertusQuartzSpade");
+            IMCMessage.addTool("axe", "appliedenergistics2:item.ToolNetherQuartzAxe");
+            IMCMessage.addTool("hoe", "appliedenergistics2:item.ToolNetherQuartzHoe");
+            IMCMessage.addTool("pickaxe", "appliedenergistics2:item.ToolNetherQuartzPickaxe");
+            IMCMessage.addTool("shovel", "appliedenergistics2:item.ToolNetherQuartzSpade");
+        }
+        if(Loader.isModLoaded("BiomesOPlenty")) {
+            IMCMessage.addTool("axe", "BiomesOPlenty:axeMud");
+            IMCMessage.addTool("hoe", "BiomesOPlenty:hoeMud");
+            IMCMessage.addTool("pickaxe", "BiomesOPlenty:pickaxeMud");
+            IMCMessage.addTool("shovel", "BiomesOPlenty:shovelMud");
+            IMCMessage.addTool("axe", "BiomesOPlenty:axeAmethyst");
+            IMCMessage.addTool("hoe", "BiomesOPlenty:hoeAmethyst");
+            IMCMessage.addTool("pickaxe", "BiomesOPlenty:pickaxeAmethyst");
+            IMCMessage.addTool("shovel", "BiomesOPlenty:shovelAmethyst");
+            IMCMessage.addTool("shears", "BiomesOPlenty:scytheWood");
+            IMCMessage.addTool("shears", "BiomesOPlenty:scytheStone");
+            IMCMessage.addTool("shears", "BiomesOPlenty:scytheIron");
+            IMCMessage.addTool("shears", "BiomesOPlenty:scytheGold");
+            IMCMessage.addTool("shears", "BiomesOPlenty:scytheDiamond");
+            IMCMessage.addTool("shears", "BiomesOPlenty:scytheMud");
+            IMCMessage.addTool("shears", "BiomesOPlenty:scytheAmethyst");
+        }
+        if(Loader.isModLoaded("TConstruct")) {
             devLog("Tinkers support loaded");
+            IMCMessage.addTool("axe", "TConstruct:hatchet");
+            IMCMessage.addTool("hoe", "TConstruct:mattock");
+            IMCMessage.addTool("pickaxe", "TConstruct:pickaxe");
+            IMCMessage.addTool("shovel", "TConstruct:shovel");
+            IMCMessage.addTool("shovel", "TConstruct:mattock");
         }
         if(Loader.isModLoaded("exnihilo")) {
             devLog("Ex Nihilo support loaded");
             IMCMessage.addToolType("crook", "Crook", "exnihilo:crook");
+            IMCMessage.addTool("crook", "exnihilo:crook");
+            IMCMessage.addTool("crook", "exnihilo:crook_bone");
             IMCMessage.addToolType("hammer", "Hammer", "exnihilo:hammer_stone");
+            IMCMessage.addTool("hammer", "exnihilo:hammer_wood");
+            IMCMessage.addTool("hammer", "exnihilo:hammer_stone");
+            IMCMessage.addTool("hammer", "exnihilo:hammer_iron");
+            IMCMessage.addTool("hammer", "exnihilo:hammer_gold");
+            IMCMessage.addTool("hammer", "exnihilo:hammer_diamond");
 
-
+            IMCMessage.addBlock("crook", "minecraft:leaves");
+            IMCMessage.addBlock("crook", "minecraft:leaves2");
+            IMCMessage.addBlock("crook", "minecraft:tallgrass");
+            IMCMessage.addBlock("crook", "minecraft:vine");
+            IMCMessage.addBlock("crook", "minecraft:web");
+            IMCMessage.addBlock("crook", "minecraft:wool");
+            IMCMessage.addBlock("hammer", "exnihilo:aluminum_dust");
+            IMCMessage.addBlock("hammer", "exnihilo:aluminum_gravel");
+            IMCMessage.addBlock("hammer", "exnihilo:aluminum_sand");
+            IMCMessage.addBlock("hammer", "exnihilo:copper_dust");
+            IMCMessage.addBlock("hammer", "exnihilo:copper_gravel");
+            IMCMessage.addBlock("hammer", "exnihilo:copper_sand");
+            IMCMessage.addBlock("hammer", "exnihilo:dust");
+            IMCMessage.addBlock("hammer", "exnihilo:ender_lead_gravel");
+            IMCMessage.addBlock("hammer", "exnihilo:ender_platinum_gravel");
+            IMCMessage.addBlock("hammer", "exnihilo:ender_silver_gravel");
+            IMCMessage.addBlock("hammer", "exnihilo:ender_tin_gravel");
+            IMCMessage.addBlock("hammer", "exnihilo:exnihilo.gravel_ender");
+            IMCMessage.addBlock("hammer", "exnihilo:exnihilo.gravel_nether");
+            IMCMessage.addBlock("hammer", "exnihilo:gold_dust");
+            IMCMessage.addBlock("hammer", "exnihilo:gold_gravel");
+            IMCMessage.addBlock("hammer", "exnihilo:gold_sand");
+            IMCMessage.addBlock("hammer", "exnihilo:iron_dust");
+            IMCMessage.addBlock("hammer", "exnihilo:iron_gravel");
+            IMCMessage.addBlock("hammer", "exnihilo:iron_sand");
+            IMCMessage.addBlock("hammer", "exnihilo:lead_dust");
+            IMCMessage.addBlock("hammer", "exnihilo:lead_gravel");
+            IMCMessage.addBlock("hammer", "exnihilo:lead_sand");
+            IMCMessage.addBlock("hammer", "exnihilo:nether_copper_gravel");
+            IMCMessage.addBlock("hammer", "exnihilo:nether_gold_gravel");
+            IMCMessage.addBlock("hammer", "exnihilo:nether_iron_gravel");
+            IMCMessage.addBlock("hammer", "exnihilo:nether_nickel_gravel");
+            IMCMessage.addBlock("hammer", "exnihilo:nickel_dust");
+            IMCMessage.addBlock("hammer", "exnihilo:nickel_gravel");
+            IMCMessage.addBlock("hammer", "exnihilo:nickel_sand");
+            IMCMessage.addBlock("hammer", "exnihilo:platinum_dust");
+            IMCMessage.addBlock("hammer", "exnihilo:platinum_gravel");
+            IMCMessage.addBlock("hammer", "exnihilo:platinum_sand");
+            IMCMessage.addBlock("hammer", "exnihilo:silver_dust");
+            IMCMessage.addBlock("hammer", "exnihilo:silver_gravel");
+            IMCMessage.addBlock("hammer", "exnihilo:silver_sand");
+            IMCMessage.addBlock("hammer", "exnihilo:tin_dust");
+            IMCMessage.addBlock("hammer", "exnihilo:tin_gravel");
+            IMCMessage.addBlock("hammer", "exnihilo:tin_sand");
+            IMCMessage.addBlock("hammer", "minecraft:cobblestone");
+            IMCMessage.addBlock("hammer", "minecraft:gravel");
+            IMCMessage.addBlock("hammer", "minecraft:sand");
         }
-        else if(Loader.isModLoaded("excompressum")) {
+        if(Loader.isModLoaded("excompressum")) {
             IMCMessage.addToolType("hammer", "Hammer", "excompressum:chickenStick");
         }
-        this.addAllTool(Lists.Tools.shears_array, "shears");
-        this.addAllTool(Lists.Tools.sickle_array, "hoe");
-        this.addAllTool(Lists.Tools.hammer_array, "pickaxe");
-        this.addAllTool(Lists.Tools.drill_array, "pickaxe");
-        this.addAllTool(Lists.Tools.drill_array, "shovel");
-        this.addAllTool(Lists.Tools.pickaxe_array, "pickaxe");
-        this.addAllTool(Lists.Tools.shovel_array, "shovel");
-        this.addAllTool(Lists.Tools.hoe_array, "hoe");
-        this.addAllTool(Lists.Tools.axe_array, "axe");
-        this.addAllTool(Lists.Tools.multitool_array, "axe");
-        this.addAllTool(Lists.Tools.multitool_array, "shovel");
-        this.addAllTool(Lists.Tools.multitool_array, "pickaxe");
-        this.addAllTool(Lists.Tools.multitool_array, "axe");
-        this.addAllTool(Lists.Tools.nihilo_hammer_array, "hammer");
-        this.addAllTool(Lists.Tools.nihilo_crook_array, "crook");
-
-        this.addAllBlock(Lists.Blocks.nihilo_hammer_array, "hammer");
-        this.addAllBlock(Lists.Blocks.nihilo_crook_array, "crook");
-    }
-
-    private void addAllTool(String[] list, String category) {
-        for (String item : list) {
-            ResourceLocation id = new ResourceLocation(item);
-            if (Loader.isModLoaded(id.getResourceDomain())) {
-                IMCMessage.addTool(category, item);
-            }
-        }
-    }
-
-    private void addAllBlock(String[] list, String category) {
-        for(String item : list) {
-            ResourceLocation id = new ResourceLocation(item);
-            if(Loader.isModLoaded(id.getResourceDomain())) {
-                IMCMessage.addBlock(category, item);
-            }
-        }
-
     }
 
     @SuppressWarnings("UnusedDeclaration")
@@ -243,10 +299,10 @@ public class VeinMinerModSupport {
     @SuppressWarnings("UnusedDeclaration")
     @SubscribeEvent
     public void banBadTools(VeinminerHarvestFailedCheck event) {
-        ItemStack currentEquipped = event.player.getHeldItemMainhand();
+        ItemStack currentEquipped = event.player.getCurrentEquippedItem();
 
-        if(currentEquipped != null && currentEquipped.getItem() != null && Item.itemRegistry.getNameForObject(currentEquipped.getItem()) != null) {
-            String item_name = Item.itemRegistry.getNameForObject(currentEquipped.getItem()).toString();
+        if(currentEquipped != null && currentEquipped.getItem() != null && GameRegistry.findUniqueIdentifierFor(currentEquipped.getItem()) != null) {
+            String item_name = GameRegistry.findUniqueIdentifierFor(currentEquipped.getItem()).toString();
             if(badTools.contains(item_name)) {
                 event.allowContinue = Permission.FORCE_DENY;
             }
@@ -256,11 +312,12 @@ public class VeinMinerModSupport {
     @SuppressWarnings("UnusedDeclaration")
     @SubscribeEvent
     public void makeToolsWork(VeinminerHarvestFailedCheck event) {
-        ItemStack currentEquipped = event.player.getHeldItemMainhand();
+        ItemStack currentEquipped = event.player.getCurrentEquippedItem();
 
         if(currentEquipped == null) {
             return;
         }
+        Item currentEquippedItem = currentEquipped.getItem();
 
         if(event.allowContinue == Permission.DENY) {
             if(overrideBlacklist.contains(event.blockName)) {
@@ -272,7 +329,6 @@ public class VeinMinerModSupport {
             }
         }
 
-        Item currentEquippedItem = event.player.getHeldItemMainhand().getItem();
         if(Loader.isModLoaded("DartCraft")) {
             devLog("Dartcraft detected");
             if(currentEquippedItem instanceof IBreakable && event.allowContinue == Permission.DENY) {
@@ -280,13 +336,13 @@ public class VeinMinerModSupport {
                 event.allowContinue = Permission.ALLOW;
             }
         }
-        if(Loader.isModLoaded("tconstruct")) {
+        if(Loader.isModLoaded("TConstruct")) {
             devLog("Tinkers Construct detected");
             tinkersConstructToolEvent(event);
         }
 
         if(event.allowContinue == Permission.DENY) {
-            String item_name = Item.itemRegistry.getNameForObject(currentEquippedItem).toString();
+            String item_name = GameRegistry.findUniqueIdentifierFor(currentEquippedItem).toString();
             if(falseTools.contains(item_name)) {
                 devLog("Allowed start with " + item_name);
                 event.allowContinue = Permission.ALLOW;
@@ -305,9 +361,9 @@ public class VeinMinerModSupport {
                     devLog(currentEquippedItem.getClass().getCanonicalName());
                 }
                 Block testLeaves = Block.getBlockFromName(event.blockName);
-                if(Block.getBlockFromName(event.blockName).isLeaves(testLeaves.getStateFromMeta(event.blockMetadata), event.player.getEntityWorld(), event.player.getPosition())
+                if(Block.getBlockFromName(event.blockName).isLeaves(event.player.getEntityWorld(), (int)event.player.posX, (int)event.player.posY, (int)event.player.posZ)
                         && event.allowContinue == Permission.DENY) {
-                    String item_name = currentEquippedItem.getRegistryName().toString();
+                    String item_name = GameRegistry.findUniqueIdentifierFor(currentEquippedItem).toString();
                     if("exnihilo:crook".equals(item_name)) event.allowContinue = Permission.ALLOW;
                     if("exnihilo:crook_bone".equals(item_name)) event.allowContinue = Permission.ALLOW;
                     if("exastris:crook_rf".equals(item_name)) event.allowContinue = Permission.ALLOW;
@@ -344,7 +400,7 @@ public class VeinMinerModSupport {
     }
 
     private void tinkersConstructToolEvent(VeinminerHarvestFailedCheck event) {
-        ItemStack currentItem = event.player.getHeldItemMainhand();
+        ItemStack currentItem = event.player.getCurrentEquippedItem();
 
         if(currentItem == null) {
             devLog("ERROR: Item is null");
@@ -355,8 +411,8 @@ public class VeinMinerModSupport {
             devLog("ERROR: No NBT data");
             return;
         }
-        NBTTagCompound toolTags = currentItem.getTagCompound().getCompoundTag("Stats");
-        if(toolTags == null || toolTags.hasNoTags()) {
+        NBTTagCompound toolTags = currentItem.getTagCompound().getCompoundTag("InfiTool");
+        if(toolTags == null) {
             devLog("ERROR: Not Tinkers Construct Tool");
             return;
         }
@@ -366,14 +422,6 @@ public class VeinMinerModSupport {
             devLog("ERROR: Block id wrong.");
             return;
         }
-
-        /*if(toolTags.hasKey("Broken")) {
-            devLog("DENY: Tool broken");
-            if(event.allowContinue == Permission.ALLOW) {
-                event.allowContinue = Permission.DENY;
-            }
-            return;
-        }*/
 
         devLog("Allowing event");
         if(event.allowContinue == Permission.DENY) {
@@ -393,7 +441,7 @@ public class VeinMinerModSupport {
     @SuppressWarnings("UnusedDeclaration")
     @SubscribeEvent
     public void applyForce(VeinminerPostUseTool event) {
-        ItemStack currentEquippedItemStack = event.player.getHeldItemMainhand();
+        ItemStack currentEquippedItemStack = event.player.getCurrentEquippedItem();
 
         // Pre-compute if avaliable to short circuit logic if not found.
         // Method called lots (many times a second, possibly thousand times total).

@@ -1,12 +1,8 @@
 package portablejim.veinminer.network;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraftforge.fml.common.FMLLog;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
-import net.minecraftforge.fml.relauncher.Side;
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import cpw.mods.fml.common.network.simpleimpl.IMessageHandler;
+import cpw.mods.fml.common.network.simpleimpl.MessageContext;
 
 /**
  * Handler to redirect message processing.
@@ -14,24 +10,8 @@ import net.minecraftforge.fml.relauncher.Side;
  */
 public abstract class GenericHandler<REQ extends IMessage> implements IMessageHandler<REQ, IMessage> {
     @Override
-    public IMessage onMessage(final REQ message, final MessageContext ctx) {
-        Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                processMessage(message, ctx);
-            }
-        };
-        if(ctx.side == Side.CLIENT) {
-            Minecraft.getMinecraft().addScheduledTask(task);
-        }
-        else if(ctx.side == Side.SERVER) {
-            EntityPlayerMP playerEntity = ctx.getServerHandler().playerEntity;
-            if(playerEntity == null) {
-                FMLLog.warning("onMessage-server: Player is null");
-                return null;
-            }
-            playerEntity.getServerForPlayer().addScheduledTask(task);
-        }
+    public IMessage onMessage(REQ message, MessageContext ctx) {
+        processMessage(message, ctx);
         return null;
     }
 

@@ -17,26 +17,22 @@
 
 package portablejim.veinminer.core;
 
+import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.TickEvent.ServerTickEvent;
+import cpw.mods.fml.common.registry.GameRegistry;
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagByte;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.FoodStats;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.translation.I18n;
+import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
-import portablejim.veinminer.VeinMiner;
 import portablejim.veinminer.api.Permission;
 import portablejim.veinminer.api.VeinminerHarvestFailedCheck;
 import portablejim.veinminer.api.VeinminerNoToolCheck;
@@ -94,7 +90,7 @@ public class MinerInstance {
         targetBlock = blockID;
         finished = false;
         serverInstance = server;
-        usedItem = player.getHeldItemMainhand();
+        usedItem = player.getCurrentEquippedItem();
         numBlocksMined = 1;
         initalBlock = startPoint;
         this.radiusLimit = radiusLimit;
@@ -111,11 +107,11 @@ public class MinerInstance {
 
     private boolean shouldContinue() {
         // Item equipped
-        if(!serverInstance.getConfigurationSettings().getEnableAllTools() && player.getHeldItemMainhand() == null) {
+        if(!serverInstance.getConfigurationSettings().getEnableAllTools() && player.getCurrentEquippedItem() == null) {
             VeinminerNoToolCheck toolCheck = new VeinminerNoToolCheck(player);
             MinecraftForge.EVENT_BUS.post(toolCheck);
 
-            if(toolCheck.allowTool.isAllowed() || player.isCreative()) {
+            if(toolCheck.allowTool.isAllowed() || player.theItemInWorldManager.isCreative()) {
                 this.finished = false;
             }
             else if(toolCheck.allowTool == Permission.FORCE_DENY) {
@@ -126,32 +122,20 @@ public class MinerInstance {
                 // If they can, they have other assistance and so should be
                 // considered a tool.
                 Block testBlock = Blocks.stone;
-                HarvestCheck event = new HarvestCheck(player, testBlock.getDefaultState(), false);
+                HarvestCheck event = new HarvestCheck(player, testBlock, false);
                 MinecraftForge.EVENT_BUS.post(event);
-                this.finished = !event.canHarvest();
+                this.finished = !event.success;
             }
         }
 
         if(usedItem == null) {
-            if(player.getHeldItemMainhand() != null) {
+            if(player.getCurrentEquippedItem() != null) {
                 this.finished = true;
             }
         }
-        else if(player.getHeldItemMainhand() == null || !player.getHeldItemMainhand().isItemEqual(usedItem)) {
+        else if(player.getCurrentEquippedItem() == null || !player.getCurrentEquippedItem().isItemEqual(usedItem)) {
             this.finished = true;
-        } else {
-			//Check to see if tconstruct tool and broken.
-			NBTTagCompound tag = usedItem.getTagCompound();
-		    	if(tag != null) {
-					NBTTagCompound stats = (NBTTagCompound)usedItem.getTagCompound().getTag("Stats");
-					if(stats != null) {
-						NBTTagByte broken = (NBTTagByte) stats.getTag("Broken");
-						if(broken != null && broken.getInt() == 1) {
-							  this.finished = true;
-						}
-					}
-				}
-		}
+        }
 
         // Player exists and is in correct status (correct button held)
         UUID playerName = player.getUniqueID();
@@ -176,11 +160,11 @@ public class MinerInstance {
 
             String problem = "mod.veinminer.finished.tooHungry";
             if(serverInstance.playerHasClient(player.getUniqueID())) {
-                player.addChatMessage(new TextComponentTranslation(problem));
+                player.addChatMessage(new ChatComponentTranslation(problem));
             }
             else {
-                String translatedProblem = I18n.translateToLocal(problem);
-                player.addChatMessage(new TextComponentString(translatedProblem));
+                String translatedProblem = StatCollector.translateToLocal(problem);
+                player.addChatMessage(new ChatComponentText(translatedProblem));
             }
         }
 
@@ -198,11 +182,11 @@ public class MinerInstance {
             player.addExperienceLevel(0);
 
             if(serverInstance.playerHasClient(player.getUniqueID())) {
-                player.addChatMessage(new TextComponentTranslation(problem));
+                player.addChatMessage(new ChatComponentTranslation(problem));
             }
             else {
-                String translatedProblem = I18n.translateToLocal(problem);
-                player.addChatMessage(new TextComponentString(translatedProblem));
+                String translatedProblem = StatCollector.translateToLocal(problem);
+                player.addChatMessage(new ChatComponentText(translatedProblem));
             }
         }
 
@@ -289,25 +273,13 @@ public class MinerInstance {
     private int mineBlock(int x, int y, int z) {
         int mineSuccessful = 0;
         Point newPoint = new Point(x, y, z);
-        IBlockState blockState = world.getBlockState(newPoint.toBlockPos());
-        if (blockState == null || blockState.equals(Blocks.air)) {
-            return mineSuccessful;
-        }
-        BlockID newBlock = new BlockID(blockState);
+        BlockID newBlock = new BlockID(world, x , y, z );
         ConfigurationSettings configurationSettings = serverInstance.getConfigurationSettings();
         startBlacklist.add(newPoint);
         if(mineAllowed(newBlock, newPoint, configurationSettings)) {
             mineSuccessful = mineSuccessful | 1;
             awaitingEntityDrop.add(newPoint);
-            boolean success;
-            try {
-                success = player.interactionManager.tryHarvestBlock(new BlockPos(x, y, z));
-            }
-            catch(NullPointerException e) {
-                success = false;
-                VeinMiner.instance.logger.warn("TryHarvestBlock NPE");
-                VeinMiner.instance.logger.warn(e);
-            }
+            boolean success = player.theItemInWorldManager.tryHarvestBlock(x, y, z);
             numBlocksMined++;
 
             if(!player.capabilities.isCreativeMode) {
@@ -413,23 +385,21 @@ public class MinerInstance {
     private void spawnDrops() {
         for(Map.Entry<ItemStackID, Integer> schedDrop : drops.entrySet()) {
             ItemStackID itemStack = schedDrop.getKey();
-            String itemName = itemStack.getItemId();
+            String[] itemNames = itemStack.getItemId().split(":", 2);
 
-            Item foundItem = Item.getByNameOrId(itemName);
-            if(foundItem == null) {
+            if(itemNames.length < 2 || GameRegistry.findItemStack(itemNames[0], itemNames[1], 1) == null) {
                 continue;
             }
 
-            int itemDamage = itemStack.getDamage();
-
             int numItems = schedDrop.getValue();
             while (numItems > itemStack.getMaxStackSize()) {
-                ItemStack newItemStack = new ItemStack(foundItem, itemStack.getMaxStackSize(), itemDamage);
+                ItemStack newItemStack = GameRegistry.findItemStack(itemNames[0], itemNames[1], itemStack.getMaxStackSize());
+                newItemStack.setItemDamage(itemStack.getDamage());
                 EntityItem newEntityItem = new EntityItem(world, initalBlock.getX() + 0.5F, initalBlock.getY() + 0.5F, initalBlock.getZ() + 0.5F, newItemStack);
                 world.spawnEntityInWorld(newEntityItem);
                 numItems -= itemStack.getMaxStackSize();
             }
-            ItemStack newItemStack = new ItemStack(foundItem, numItems, itemDamage);
+            ItemStack newItemStack = GameRegistry.findItemStack(itemNames[0], itemNames[1], numItems);
             newItemStack.setItemDamage(itemStack.getDamage());
             EntityItem newEntityItem = new EntityItem(world, initalBlock.getX() + 0.5F, initalBlock.getY() + 0.5F, initalBlock.getZ() + 0.5F, newItemStack);
             world.spawnEntityInWorld(newEntityItem);

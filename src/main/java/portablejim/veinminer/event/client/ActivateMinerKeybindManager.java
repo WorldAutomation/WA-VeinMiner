@@ -17,10 +17,10 @@
 
 package portablejim.veinminer.event.client;
 
-import net.minecraftforge.fml.client.registry.ClientRegistry;
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.InputEvent;
+import cpw.mods.fml.client.registry.ClientRegistry;
+import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.InputEvent;
 import net.minecraft.client.settings.KeyBinding;
 import org.lwjgl.input.Keyboard;
 import portablejim.veinminer.VeinMiner;
@@ -48,11 +48,11 @@ public class ActivateMinerKeybindManager {
 
     @SuppressWarnings("UnusedDeclaration")
     @SubscribeEvent
-    public void KeyEvent(InputEvent.KeyInputEvent event) {
+    public void KeyEvent(InputEvent event) {
         boolean sendPacket = false;
 
         int mode = VeinMiner.instance.currentMode;
-        boolean pressed = keyBinding.isKeyDown();
+        boolean pressed = keyBinding.getIsKeyPressed();
         if(mode == PreferredMode.DISABLED) {
             statusEnabled = false;
             if(count[0] < PACKET_COUNT) {

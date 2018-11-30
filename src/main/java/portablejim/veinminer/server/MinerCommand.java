@@ -18,18 +18,14 @@
 package portablejim.veinminer.server;
 
 import com.google.common.base.Joiner;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.translation.I18n;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
+import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.util.StatCollector;
 import portablejim.veinminer.configuration.ConfigurationSettings;
 import portablejim.veinminer.util.BlockID;
 import portablejim.veinminer.util.PlayerStatus;
@@ -67,18 +63,13 @@ public class MinerCommand extends CommandBase {
         return "veinminer";
     }
 
-    public int getRequiredPermissionLevel()
-    {
-        return 0;
-    }
-
-    public boolean checkPermission(MinecraftServer server, ICommandSender sender)
-    {
-        return true;
+    @Override
+    public boolean canCommandSenderUseCommand(ICommandSender par1ICommandSender) {
+        return par1ICommandSender instanceof EntityPlayerMP || par1ICommandSender instanceof DedicatedServer;
     }
 
     @Override
-    public void execute(MinecraftServer server, ICommandSender icommandsender, String[] astring) throws CommandException {
+    public void processCommand(ICommandSender icommandsender, String[] astring) {
         ICustomCommandSender senderPlayer;
         if(icommandsender instanceof EntityPlayerMP) {
             senderPlayer = new CommandSenderPlayer(minerServer, (EntityPlayerMP)icommandsender);
@@ -87,7 +78,7 @@ public class MinerCommand extends CommandBase {
             senderPlayer = new CommandSenderServer((DedicatedServer)icommandsender);
         }
         else {
-            String message = I18n.translateToLocal("command.veinminer.cannotuse");
+            String message = StatCollector.translateToLocal("command.veinminer.cannotuse");
             throw new CommandException(message);
         }
 
@@ -137,50 +128,30 @@ public class MinerCommand extends CommandBase {
         }
     }
 
-    private void sendProperChatToPlayer(ICommandSender player, String incomingMessage, Object... params) {
-        ITextComponent message;
-        if(minerServer.playerHasClient(player.getCommandSenderEntity().getPersistentID())) {
-            message = new TextComponentTranslation(incomingMessage, params);
-        }
-        else {
-            String rawMessage = I18n.translateToLocal(incomingMessage);
-            message = new TextComponentString(String.format(rawMessage, params));
-        }
-        player.addChatMessage(message);
-    }
-
     private void showUsageError(String errorKey) throws WrongUsageException {
-        String message = I18n.translateToLocal(errorKey);
+        String message = StatCollector.translateToLocal(errorKey);
         throw new WrongUsageException(message);
     }
 
-    private void showUsageError(String errorKey, Object... params) throws WrongUsageException {
-        String message = I18n.translateToLocalFormatted(errorKey, params);
+    private void showUsageError(String errorKey, Object... params) {
+        String message = StatCollector.translateToLocalFormatted(errorKey, params);
         throw new WrongUsageException(message);
     }
 
-    private void needAdmin(ICustomCommandSender sender) throws CommandException {
-        if(sender instanceof CommandSenderPlayer) {
-            CommandSenderPlayer player = (CommandSenderPlayer) sender;
-            MinecraftServer server = player.getPlayer().mcServer;
-            if (server.isDedicatedServer() && !player.getPlayer().canCommandSenderUseCommand(server.getOpPermissionLevel(), "veinminer.admin")) {
-                boolean playerNoClient = !minerServer.playerHasClient(player.getPlayer().getUniqueID());
-                String message = "command.veinminer.permissionDenied";
-                if (playerNoClient) {
-                    message = I18n.translateToFallback(message);
-                }
-                throw new CommandException(message);
-            }
+    private void needAdmin(ICustomCommandSender player) {
+        if(!player.canRunCommands()) {
+            String message = player.localise("command.veinminer.permissionDenied");
+            throw new CommandException(message);
         }
     }
 
-    private void commandAction(String[] commandString, String commandName) throws WrongUsageException {
+    private void commandAction(String[] commandString, String commandName) {
         if (commandString.length < 3 || (!"add".equals(commandString[2]) && !"remove".equals(commandString[2]))) {
             showUsageError("command.veinminer." + commandName + ".actionerror", commandString[1]);
         }
     }
 
-    private void runCommandMode(ICustomCommandSender sender, String[] astring) throws CommandException {
+    private void runCommandMode(ICustomCommandSender sender, String[] astring) throws WrongUsageException {
         if(sender instanceof CommandSenderPlayer) {
             CommandSenderPlayer senderPlayer = ((CommandSenderPlayer) sender);
             UUID player = senderPlayer.getPlayer().getPersistentID();
@@ -210,7 +181,7 @@ public class MinerCommand extends CommandBase {
         }
     }
 
-    private void runCommandBlocklist(ICustomCommandSender senderPlayer, String[] astring) throws WrongUsageException {
+    private void runCommandBlocklist(ICustomCommandSender senderPlayer, String[] astring) {
         ConfigurationSettings configSettings = minerServer.getConfigurationSettings();
 
         ConfigurationSettings settings = minerServer.getConfigurationSettings();
@@ -263,7 +234,7 @@ public class MinerCommand extends CommandBase {
         }
     }
 
-    private void runCommandToollist(ICustomCommandSender senderPlayer, String[] astring) throws WrongUsageException {
+    private void runCommandToollist(ICustomCommandSender senderPlayer, String[] astring) {
         ConfigurationSettings configSettings = minerServer.getConfigurationSettings();
 
         ConfigurationSettings settings = minerServer.getConfigurationSettings();
@@ -309,7 +280,7 @@ public class MinerCommand extends CommandBase {
         }
     }
 
-    private void runCommandBlocklimit(ICustomCommandSender senderPlayer, String[] astring) throws WrongUsageException {
+    private void runCommandBlocklimit(ICustomCommandSender senderPlayer, String[] astring) {
         if(astring.length == 1) {
             showUsageError("command.veinminer.blocklimit");
         }
@@ -328,7 +299,7 @@ public class MinerCommand extends CommandBase {
         senderPlayer.sendProperChat("command.veinminer.blocklimit.set", actualBlockPerTick);
     }
 
-    private void runCommandRange(ICustomCommandSender senderPlayer, String[] astring) throws WrongUsageException {
+    private void runCommandRange(ICustomCommandSender senderPlayer, String[] astring) {
         if(astring.length == 1) {
             showUsageError("command.veinminer.range");
         }
@@ -347,7 +318,7 @@ public class MinerCommand extends CommandBase {
         senderPlayer.sendProperChat("command.veinminer.range.set", actualRange);
     }
 
-    private void runCommandPerTick(ICustomCommandSender senderPlayer, String[] astring) throws WrongUsageException {
+    private void runCommandPerTick(ICustomCommandSender senderPlayer, String[] astring) {
         if(astring.length == 1) {
             showUsageError("command.veinminer.pertick");
         }
@@ -383,7 +354,7 @@ public class MinerCommand extends CommandBase {
                 senderPlayer.sendProperChat("command.veinminer.help.enable2");
                 senderPlayer.sendProperChat("command.veinminer.help.enable3");
                 senderPlayer.sendProperChat("command.veinminer.help.enable4");
-                //sendProperChatToPlayer(senderPlayer, "command.veinminer.help.enable5");
+                //senderPlayer.sendProperChat("command.veinminer.help.enable5");
             }
         }
         else {
@@ -399,9 +370,7 @@ public class MinerCommand extends CommandBase {
         }
     }
 
-    @Override
-    @SuppressWarnings("UnusedDeclaration")
-    public List<String> getTabCompletionOptions(MinecraftServer server, ICommandSender par1ICommandSender, String[] arguments, BlockPos pos) {
+    public List addTabCompletionOptions(ICommandSender par1ICommandSender, String[] arguments) {
         switch (arguments.length) {
             case 1:
                 return getListOfStringsMatchingLastWord(arguments, commands);
@@ -432,12 +401,17 @@ public class MinerCommand extends CommandBase {
 
     @Override
     public String getCommandUsage(ICommandSender par1ICommandSender) {
-        return I18n.translateToLocal("command.veinminer");
+        return StatCollector.translateToLocal("command.veinminer");
     }
 
-    @SuppressWarnings("UnusedDeclaration")
     public int compareTo(MinerCommand par1ICommand)
     {
         return this.getCommandName().compareTo(par1ICommand.getCommandName());
+    }
+
+    @Override
+    public int compareTo(Object par1Obj)
+    {
+        return this.compareTo((ICommand)par1Obj);
     }
 }

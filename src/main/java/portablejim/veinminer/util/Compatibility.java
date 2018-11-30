@@ -8,6 +8,6 @@ import portablejim.veinminer.api.Point;
  */
 public class Compatibility {
     public static Point getPoint(BlockEvent.BreakEvent event) {
-        return new Point(event.getPos().getX(), event.getPos().getY(), event.getPos().getZ());
+        return new Point(event.x, event.y, event.z);
     }
 }

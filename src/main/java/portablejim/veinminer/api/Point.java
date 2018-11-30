@@ -17,8 +17,6 @@
 
 package portablejim.veinminer.api;
 
-import net.minecraft.util.math.BlockPos;
-
 /**
  * Point class to store a 3D point, including distance calculations.
  *
@@ -95,10 +93,6 @@ public class Point {
 
     public boolean isWithinRange(int x, int y, int z, int range) {
         return distanceFrom(x, y, z) <= (range * range);
-    }
-
-    public BlockPos toBlockPos() {
-        return new BlockPos(x, y, z);
     }
 
     @Override

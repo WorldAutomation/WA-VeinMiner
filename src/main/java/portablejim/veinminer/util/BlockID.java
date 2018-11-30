@@ -18,8 +18,6 @@
 package portablejim.veinminer.util;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.oredict.OreDictionary;
 
@@ -38,7 +36,6 @@ public class BlockID implements Comparable<BlockID>
 {
     public String name;
     public int metadata;
-    public IBlockState state = null;
     
     public BlockID(String fullDescription) {
         int preMeta = -1;
@@ -67,14 +64,12 @@ public class BlockID implements Comparable<BlockID>
         this.metadata =  meta < -1 || meta == OreDictionary.WILDCARD_VALUE ? -1 : meta;
     }
 
-    @Deprecated
-    public BlockID(World world, BlockPos position) {
-        this(world.getBlockState(position));
+    public BlockID(World world, int x, int y, int z) {
+        this(world, x, y, z, world.getBlockMetadata(x, y, z));
     }
 
-    public BlockID(IBlockState state) {
-        this(Block.blockRegistry.getNameForObject(state.getBlock()).toString(), state.getBlock().getMetaFromState(state));
-        this.state = state;
+    public BlockID(World world, int x, int y, int z, int metadata) {
+        this(Block.blockRegistry.getNameForObject(world.getBlock(x, y, z)), metadata);
     }
 
     @Override

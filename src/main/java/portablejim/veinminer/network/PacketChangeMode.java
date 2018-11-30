@@ -17,13 +17,13 @@
 
 package portablejim.veinminer.network;
 
+import cpw.mods.fml.common.network.simpleimpl.IMessage;
+import cpw.mods.fml.common.network.simpleimpl.MessageContext;
+import cpw.mods.fml.relauncher.Side;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraft.util.ChatComponentTranslation;
 import portablejim.veinminer.VeinMiner;
 import portablejim.veinminer.server.MinerServer;
 import portablejim.veinminer.util.PlayerStatus;
@@ -77,13 +77,13 @@ public class PacketChangeMode implements IMessage {
                     case PreferredMode.DISABLED:
                     case PreferredMode.SNEAK_ACTIVE:
                     case PreferredMode.SNEAK_INACTIVE:
-                        Minecraft.getMinecraft().thePlayer.addChatMessage(new TextComponentTranslation("command.veinminerc.set.disabled"));
+                        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentTranslation("command.veinminerc.set.disabled"));
                         break;
                     case PreferredMode.PRESSED:
-                        Minecraft.getMinecraft().thePlayer.addChatMessage(new TextComponentTranslation("command.veinminerc.set.pressed"));
+                        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentTranslation("command.veinminerc.set.pressed"));
                         break;
                     case PreferredMode.RELEASED:
-                        Minecraft.getMinecraft().thePlayer.addChatMessage(new TextComponentTranslation("command.veinminerc.set.released"));
+                        Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentTranslation("command.veinminerc.set.released"));
                         break;
                 }
             }
@@ -98,15 +98,15 @@ public class PacketChangeMode implements IMessage {
                     case PreferredMode.PRESSED:
                     case PreferredMode.RELEASED:
                         minerServer.setPlayerStatus(playerName, PlayerStatus.INACTIVE);
-                        player.addChatMessage(new TextComponentTranslation("mod.veinminer.preferredmode.auto"));
+                        player.addChatMessage(new ChatComponentTranslation("mod.veinminer.preferredmode.auto"));
                         break;
                     case PreferredMode.SNEAK_ACTIVE:
                         minerServer.setPlayerStatus(playerName, PlayerStatus.SNEAK_ACTIVE);
-                        player.addChatMessage(new TextComponentTranslation("mod.veinminer.preferredmode.sneak"));
+                        player.addChatMessage(new ChatComponentTranslation("mod.veinminer.preferredmode.sneak"));
                         break;
                     case PreferredMode.SNEAK_INACTIVE:
                         minerServer.setPlayerStatus(playerName, PlayerStatus.SNEAK_INACTIVE);
-                        player.addChatMessage(new TextComponentTranslation("mod.veinminer.preferredmode.nosneak"));
+                        player.addChatMessage(new ChatComponentTranslation("mod.veinminer.preferredmode.nosneak"));
                         break;
 
                 }

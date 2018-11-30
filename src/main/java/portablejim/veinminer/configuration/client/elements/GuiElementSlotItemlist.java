@@ -17,9 +17,8 @@
 
 package portablejim.veinminer.configuration.client.elements;
 
-import net.minecraft.block.state.IBlockState;
-import net.minecraftforge.fml.client.GuiScrollingList;
-import net.minecraftforge.fml.common.registry.GameRegistry;
+import cpw.mods.fml.client.GuiScrollingList;
+import cpw.mods.fml.common.registry.GameRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.Tessellator;
@@ -45,8 +44,8 @@ public class GuiElementSlotItemlist extends GuiScrollingList {
     String toolType;
 
     public GuiElementSlotItemlist(ItemlistConfigGuiScreen parent, String toolType) {
-        super(Minecraft.getMinecraft(), parent.width - 10, parent.height, 60, parent.height - 40, 5, 22, parent.width, parent.height);
-        iconRenderer = new IconRenderer(parent.mc, parent.getZLevel());
+        super(Minecraft.getMinecraft(), parent.width - 10, parent.height, 60, parent.height - 40, 5, 22);
+        iconRenderer = new IconRenderer(parent.mc, parent.getZLevel(), parent.getFontRenderer(), parent.mc.getTextureManager());
         this.parent = parent;
         this.toolType = toolType;
         updateItemIds();

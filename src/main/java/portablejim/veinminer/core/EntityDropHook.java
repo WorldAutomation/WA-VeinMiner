@@ -17,14 +17,13 @@
 
 package portablejim.veinminer.core;
 
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.registry.GameRegistry;
+import cpw.mods.fml.common.registry.GameRegistry.UniqueIdentifier;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
-import net.minecraft.item.Item;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.registry.GameRegistry;
 import portablejim.veinminer.server.MinerServer;
 import portablejim.veinminer.api.Point;
 
@@ -48,9 +47,9 @@ public class EntityDropHook {
     @SuppressWarnings("UnusedDeclaration")
     @SubscribeEvent
     public void tryAddEntity(EntityJoinWorldEvent event) {
-        Entity entity = event.getEntity();
+        Entity entity = event.entity;
 
-        if(event.getWorld().isRemote) {
+        if(event.world.isRemote) {
             return;
         }
 
@@ -77,10 +76,9 @@ public class EntityDropHook {
 
         EntityItem entityItem = (EntityItem) entity;
 
-        /* Possibly obsolete
         if(entityItem.getDataWatcher().getWatchableObjectItemStack(10) == null) {
             return;
-        } */
+        }
 
         if(entityItem.getEntityItem().hasTagCompound()) {
             return;
@@ -89,10 +87,14 @@ public class EntityDropHook {
         boolean isBlock;
         boolean isItem;
 
-        ResourceLocation uniqueId = Item.itemRegistry.getNameForObject(entityItem.getEntityItem().getItem());
+        UniqueIdentifier uniqueId = GameRegistry.findUniqueIdentifierFor(entityItem.getEntityItem().getItem());
 
-        isBlock = GameRegistry.findBlock(uniqueId.getResourceDomain(), uniqueId.getResourcePath()) != null;
-        isItem = GameRegistry.findItem(uniqueId.getResourceDomain(), uniqueId.getResourcePath()) != null;
+        if(uniqueId == null) {
+            return;
+        }
+
+        isBlock = GameRegistry.findBlock(uniqueId.modId, uniqueId.name) != null;
+        isItem = GameRegistry.findItem(uniqueId.modId, uniqueId.name) != null;
 
         StackTraceElement[] stackTrace = (new Throwable()).getStackTrace();
         boolean veinminerMethod = false;
